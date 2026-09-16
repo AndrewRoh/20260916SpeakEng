@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SpeakEng</string>
+
+    <string name="nav_home">Home</string>
+    <string name="nav_conversation">Conversation</string>
+    <string name="nav_pronunciation">Pronunciation</string>
+    <string name="nav_curriculum">Curriculum</string>
+    <string name="nav_profile">Profile</string>
+</resources>
