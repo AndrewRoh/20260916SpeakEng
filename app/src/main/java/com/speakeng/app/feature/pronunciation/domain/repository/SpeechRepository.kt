@@ -1,16 +1,13 @@
 package com.speakeng.app.feature.pronunciation.domain.repository
 
 import com.speakeng.app.feature.pronunciation.domain.model.SpeechEvent
+import com.speakeng.app.feature.pronunciation.domain.model.SpeechRecognitionState
 import kotlinx.coroutines.flow.Flow
 
-/**
- * Speech-to-text / text-to-speech gateway.
- * TODO(Phase 3): implement STT natively with android.speech.SpeechRecognizer.
- * TTS is implemented for real (see SpeechRepositoryImpl) since the reading feature needs it.
- */
+/** Speech-to-text / text-to-speech gateway, backed by Android's SpeechRecognizer and TextToSpeech. */
 interface SpeechRepository {
-    /** Emits partial/final recognized text while listening. */
-    fun startListening(): Flow<String>
+    /** Starts listening and emits state changes until a [SpeechRecognitionState.Result] or [SpeechRecognitionState.Error]. */
+    fun startListening(): Flow<SpeechRecognitionState>
 
     fun stopListening()
 

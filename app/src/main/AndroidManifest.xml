@@ -4,6 +4,13 @@
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <!-- Required on API 30+ so SpeechRecognizer.isRecognitionAvailable() can see the recognition service. -->
+    <queries>
+        <intent>
+            <action android:name="android.speech.RecognitionService" />
+        </intent>
+    </queries>
+
     <application
         android:name=".SpeakEngApplication"
         android:allowBackup="true"

@@ -6,6 +6,7 @@ import app.cash.turbine.test
 import com.speakeng.app.core.common.UiState
 import com.speakeng.app.core.testing.MainDispatcherExtension
 import com.speakeng.app.feature.pronunciation.domain.model.SpeechEvent
+import com.speakeng.app.feature.pronunciation.domain.model.SpeechRecognitionState
 import com.speakeng.app.feature.pronunciation.domain.repository.SpeechRepository
 import com.speakeng.app.feature.reading.domain.model.Book
 import com.speakeng.app.feature.reading.domain.repository.BookRepository
@@ -29,7 +30,7 @@ class ReadingViewModelTest {
     }
 
     private class FakeSpeechRepository : SpeechRepository {
-        override fun startListening(): Flow<String> = emptyFlow()
+        override fun startListening(): Flow<SpeechRecognitionState> = emptyFlow()
         override fun stopListening() = Unit
         override fun speak(text: String, utteranceId: String, rate: Float) = Unit
         override fun stop() = Unit
