@@ -1,5 +1,7 @@
 package com.speakeng.app.core.di
 
+import com.speakeng.app.feature.conversation.data.remote.GeminiChatClient
+import com.speakeng.app.feature.conversation.data.remote.GeminiChatClientImpl
 import com.speakeng.app.feature.conversation.data.repository.ConversationAiRepositoryImpl
 import com.speakeng.app.feature.conversation.domain.repository.ConversationAiRepository
 import com.speakeng.app.feature.curriculum.data.repository.CurriculumRepositoryImpl
@@ -33,6 +35,10 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindConversationAiRepository(impl: ConversationAiRepositoryImpl): ConversationAiRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindGeminiChatClient(impl: GeminiChatClientImpl): GeminiChatClient
 
     @Binds
     @Singleton
