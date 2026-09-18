@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+
 package com.speakeng.app.feature.pronunciation.presentation
 
 import android.Manifest
