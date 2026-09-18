@@ -36,7 +36,7 @@ class SpeechRepositoryImpl @Inject constructor(
                 ttsEvents.tryEmit(SpeechEvent.Completed(utteranceId))
             }
 
-            @Deprecated("Deprecated in Java", ReplaceWith(""))
+            @Suppress("OVERRIDE_DEPRECATION")
             override fun onError(utteranceId: String) {
                 ttsEvents.tryEmit(SpeechEvent.Failed(utteranceId))
             }
