@@ -7,6 +7,7 @@ import com.speakeng.app.feature.conversation.domain.model.MessageSender
 import com.speakeng.app.feature.conversation.domain.repository.ConversationAiRepository
 import com.speakeng.app.feature.conversation.domain.usecase.SendMessageUseCase
 import com.speakeng.app.feature.pronunciation.domain.model.SpeechEvent
+import com.speakeng.app.feature.pronunciation.domain.model.SpeechRecognitionState
 import com.speakeng.app.feature.pronunciation.domain.repository.SpeechRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
@@ -25,7 +26,7 @@ class ConversationViewModelTest {
 
     private class FakeSpeechRepository : SpeechRepository {
         var lastSpoken: String? = null
-        override fun startListening(): Flow<String> = emptyFlow()
+        override fun startListening(): Flow<SpeechRecognitionState> = emptyFlow()
         override fun stopListening() = Unit
         override fun speak(text: String, utteranceId: String, rate: Float) {
             lastSpoken = text
