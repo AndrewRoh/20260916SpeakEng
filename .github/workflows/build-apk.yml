@@ -1,0 +1,51 @@
+name: Build debug APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Run unit tests
+        run: ./gradlew testDebugUnitTest --no-daemon
+
+      - name: Build debug APK
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: ./gradlew assembleDebug --no-daemon
+
+      - name: Upload APK as build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: speakeng-debug-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Publish/update "latest-debug" release with the APK
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest-debug
+          name: Latest debug build
+          prerelease: true
+          body: |
+            Auto-built from commit ${{ github.sha }} on `main`.
+            Download `app-debug.apk` below, open it on your Android phone, and install
+            (allow "install from unknown sources" if prompted).
+          files: app/build/outputs/apk/debug/app-debug.apk

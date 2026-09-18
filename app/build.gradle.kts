@@ -11,11 +11,15 @@ plugins {
 }
 
 // Read GEMINI_API_KEY from local.properties (per-machine, gitignored) so it never gets
-// committed to source control. Add `GEMINI_API_KEY=your_key` to local.properties locally.
+// committed to source control. Add `GEMINI_API_KEY=your_key` to local.properties locally,
+// or set a GEMINI_API_KEY environment variable / GitHub Actions secret for CI builds.
 val localProperties = Properties().apply {
     val file = rootProject.file("local.properties")
     if (file.exists()) file.inputStream().use { load(it) }
 }
+val geminiApiKey: String = localProperties.getProperty("GEMINI_API_KEY")
+    ?: System.getenv("GEMINI_API_KEY")
+    ?: ""
 
 android {
     namespace = "com.speakeng.app"
@@ -30,11 +34,7 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        buildConfigField(
-            "String",
-            "GEMINI_API_KEY",
-            "\"${localProperties.getProperty("GEMINI_API_KEY", "")}\"",
-        )
+        buildConfigField("String", "GEMINI_API_KEY", "\"$geminiApiKey\"")
     }
 
     buildTypes {
