@@ -46,7 +46,7 @@ class ConversationViewModelTest {
 
         viewModel.uiState.test {
             assertEquals(
-                UiState.Success(ConversationData(emptyList(), null, 1f, false, false)),
+                UiState.Success(ConversationData(emptyList(), null, 1f, false, false, null)),
                 awaitItem(),
             )
         }

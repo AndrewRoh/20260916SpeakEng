@@ -129,7 +129,7 @@ class PronunciationViewModelTest {
     }
 
     @Test
-    fun `a recognition error surfaces as UiState Error`() = runTest(testDispatcher) {
+    fun `a recognition error surfaces as an inline mic error without wiping the screen`() = runTest(testDispatcher) {
         val (viewModel, speechRepository) = newViewModel()
         advanceUntilIdle()
         viewModel.selectBook(book.id)
@@ -140,7 +140,9 @@ class PronunciationViewModelTest {
         viewModel.startListening()
         advanceUntilIdle()
 
-        assertEquals(UiState.Error("No speech detected"), viewModel.uiState.value)
+        val data = viewModel.data()
+        assertFalse(data.isListening)
+        assertEquals("No speech detected", data.micErrorMessage)
     }
 
     @Test

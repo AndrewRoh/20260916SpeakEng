@@ -9,6 +9,8 @@ data class ConversationData(
     val rate: Float,
     val isRepeatEnabled: Boolean,
     val isAutoPlayEnabled: Boolean,
+    /** Shown as a dismissible inline notice; a failed send shouldn't wipe the conversation. */
+    val errorMessage: String?,
 )
 
 typealias ConversationUiState = UiState<ConversationData>

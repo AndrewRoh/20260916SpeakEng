@@ -83,7 +83,7 @@ class PronunciationViewModel @Inject constructor(
         if (!data.hasRecordPermission) return
         val sentence = data.sentences.getOrNull(data.selectedSentenceIndex) ?: return
 
-        updateData { it.copy(isListening = true, result = null) }
+        updateData { it.copy(isListening = true, result = null, micErrorMessage = null) }
         viewModelScope.launch {
             speechRepository.startListening().collect { state ->
                 when (state) {
@@ -91,12 +91,15 @@ class PronunciationViewModel @Inject constructor(
                     is SpeechRecognitionState.Listening -> updateData { it.copy(isListening = true) }
                     is SpeechRecognitionState.Result -> onRecognitionResult(sentence.text, state.text)
                     is SpeechRecognitionState.Error -> {
-                        updateData { it.copy(isListening = false) }
-                        _uiState.value = UiState.Error(state.message)
+                        updateData { it.copy(isListening = false, micErrorMessage = state.message) }
                     }
                 }
             }
         }
+    }
+
+    fun dismissMicError() {
+        updateData { it.copy(micErrorMessage = null) }
     }
 
     fun stopListening() {
@@ -111,7 +114,7 @@ class PronunciationViewModel @Inject constructor(
                 updateData { it.copy(result = result, sessionScores = it.sessionScores + result.accuracy) }
             }
             .onFailure { error ->
-                _uiState.value = UiState.Error(error.message ?: "Failed to evaluate pronunciation")
+                updateData { it.copy(micErrorMessage = error.message ?: "Failed to evaluate pronunciation") }
             }
     }
 
@@ -147,6 +150,7 @@ class PronunciationViewModel @Inject constructor(
                     result = null,
                     hasRecordPermission = false,
                     sessionScores = emptyList(),
+                    micErrorMessage = null,
                 ),
             )
         }

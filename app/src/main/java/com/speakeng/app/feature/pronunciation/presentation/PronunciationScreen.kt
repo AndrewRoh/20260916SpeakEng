@@ -148,6 +148,10 @@ private fun PronunciationContent(
             MicSection(isListening = data.isListening, onMicClick = onMicClick, onStopListening = onStopListening)
         }
 
+        data.micErrorMessage?.let { message ->
+            Text(text = message, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
+        }
+
         data.result?.let { result ->
             ResultCard(result = result, onRetry = onMicClick)
         }
@@ -283,6 +287,7 @@ private fun PronunciationScreenPreview() {
                     ),
                     hasRecordPermission = true,
                     sessionScores = listOf(75, 80),
+                    micErrorMessage = null,
                 ),
             ),
         ) { data ->

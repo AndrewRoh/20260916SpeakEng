@@ -17,6 +17,8 @@ data class PronunciationData(
     val result: PronunciationResult?,
     val hasRecordPermission: Boolean,
     val sessionScores: List<Int>,
+    /** Shown as a dismissible inline notice; a failed recognition attempt shouldn't wipe the screen. */
+    val micErrorMessage: String?,
 )
 
 typealias PronunciationUiState = UiState<PronunciationData>

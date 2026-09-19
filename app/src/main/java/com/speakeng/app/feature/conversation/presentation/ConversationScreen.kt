@@ -9,11 +9,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -47,6 +49,7 @@ fun ConversationScreen(viewModel: ConversationViewModel = hiltViewModel()) {
             onRateSelected = viewModel::setPlaybackRate,
             onToggleRepeat = viewModel::toggleRepeat,
             onToggleAutoPlay = viewModel::toggleAutoPlay,
+            onDismissError = viewModel::dismissError,
         )
     }
 }
@@ -60,6 +63,7 @@ private fun ConversationContent(
     onRateSelected: (Float) -> Unit,
     onToggleRepeat: () -> Unit,
     onToggleAutoPlay: () -> Unit,
+    onDismissError: () -> Unit,
 ) {
     var input by remember { mutableStateOf("") }
 
@@ -71,6 +75,23 @@ private fun ConversationContent(
         ) {
             Text(text = "Auto-play AI replies")
             Switch(checked = data.isAutoPlayEnabled, onCheckedChange = { onToggleAutoPlay() })
+        }
+
+        data.errorMessage?.let { message ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = message,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.weight(1f),
+                )
+                IconButton(onClick = onDismissError) {
+                    Icon(Icons.Filled.Close, contentDescription = "Dismiss error")
+                }
+            }
         }
 
         LazyColumn(modifier = Modifier.weight(1f)) {
@@ -156,6 +177,7 @@ private fun ConversationScreenPreview() {
                     rate = 1f,
                     isRepeatEnabled = false,
                     isAutoPlayEnabled = false,
+                    errorMessage = null,
                 ),
             ),
         ) {
@@ -167,6 +189,7 @@ private fun ConversationScreenPreview() {
                 onRateSelected = {},
                 onToggleRepeat = {},
                 onToggleAutoPlay = {},
+                onDismissError = {},
             )
         }
     }
