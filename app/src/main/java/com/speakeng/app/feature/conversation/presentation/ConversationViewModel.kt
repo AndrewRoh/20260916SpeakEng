@@ -34,6 +34,7 @@ class ConversationViewModel @Inject constructor(
                 rate = 1f,
                 isRepeatEnabled = false,
                 isAutoPlayEnabled = false,
+                errorMessage = null,
             ),
         )
         observeSpeechEvents()
@@ -47,7 +48,7 @@ class ConversationViewModel @Inject constructor(
             text = text,
             timestamp = System.currentTimeMillis(),
         )
-        updateData { it.copy(messages = it.messages + userMessage) }
+        updateData { it.copy(messages = it.messages + userMessage, errorMessage = null) }
 
         viewModelScope.launch {
             val result = sendMessageUseCase(text)
@@ -57,9 +58,13 @@ class ConversationViewModel @Inject constructor(
                     listenToMessage(aiMessage.id)
                 }
             }.onFailure { error ->
-                _uiState.value = UiState.Error(error.message ?: "Failed to reach the AI conversation partner")
+                updateData { it.copy(errorMessage = error.message ?: "Failed to reach the AI conversation partner") }
             }
         }
+    }
+
+    fun dismissError() {
+        updateData { it.copy(errorMessage = null) }
     }
 
     fun listenToMessage(messageId: Long) {
