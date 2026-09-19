@@ -3,10 +3,12 @@ package com.speakeng.app.feature.pronunciation.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.speakeng.app.core.common.UiState
+import com.speakeng.app.feature.pronunciation.domain.model.PronunciationHistoryRecord
 import com.speakeng.app.feature.pronunciation.domain.model.SpeechEvent
 import com.speakeng.app.feature.pronunciation.domain.model.SpeechRecognitionState
 import com.speakeng.app.feature.pronunciation.domain.repository.SpeechRepository
 import com.speakeng.app.feature.pronunciation.domain.usecase.EvaluatePronunciationUseCase
+import com.speakeng.app.feature.pronunciation.domain.usecase.SavePronunciationResultUseCase
 import com.speakeng.app.feature.reading.domain.model.Book
 import com.speakeng.app.feature.reading.domain.usecase.GetBooksUseCase
 import com.speakeng.app.feature.reading.domain.usecase.LoadReadingSentencesUseCase
@@ -23,6 +25,7 @@ class PronunciationViewModel @Inject constructor(
     private val getBooksUseCase: GetBooksUseCase,
     private val loadReadingSentencesUseCase: LoadReadingSentencesUseCase,
     private val evaluatePronunciationUseCase: EvaluatePronunciationUseCase,
+    private val savePronunciationResultUseCase: SavePronunciationResultUseCase,
     private val speechRepository: SpeechRepository,
 ) : ViewModel() {
 
@@ -81,7 +84,9 @@ class PronunciationViewModel @Inject constructor(
     fun startListening() {
         val data = currentData() ?: return
         if (!data.hasRecordPermission) return
-        val sentence = data.sentences.getOrNull(data.selectedSentenceIndex) ?: return
+        val book = data.selectedBook ?: return
+        val sentenceIndex = data.selectedSentenceIndex
+        val sentence = data.sentences.getOrNull(sentenceIndex) ?: return
 
         updateData { it.copy(isListening = true, result = null, micErrorMessage = null) }
         viewModelScope.launch {
@@ -89,7 +94,7 @@ class PronunciationViewModel @Inject constructor(
                 when (state) {
                     is SpeechRecognitionState.Idle -> Unit
                     is SpeechRecognitionState.Listening -> updateData { it.copy(isListening = true) }
-                    is SpeechRecognitionState.Result -> onRecognitionResult(sentence.text, state.text)
+                    is SpeechRecognitionState.Result -> onRecognitionResult(book, sentenceIndex, sentence.text, state.text)
                     is SpeechRecognitionState.Error -> {
                         updateData { it.copy(isListening = false, micErrorMessage = state.message) }
                     }
@@ -107,11 +112,24 @@ class PronunciationViewModel @Inject constructor(
         updateData { it.copy(isListening = false) }
     }
 
-    private fun onRecognitionResult(targetText: String, recognizedText: String) {
+    private fun onRecognitionResult(book: Book, sentenceIndex: Int, targetText: String, recognizedText: String) {
         updateData { it.copy(isListening = false) }
         evaluatePronunciationUseCase(targetText, recognizedText)
             .onSuccess { result ->
                 updateData { it.copy(result = result, sessionScores = it.sessionScores + result.accuracy) }
+                viewModelScope.launch {
+                    savePronunciationResultUseCase(
+                        PronunciationHistoryRecord(
+                            bookId = book.id,
+                            bookTitle = book.title,
+                            sentenceIndex = sentenceIndex,
+                            sentenceText = targetText,
+                            recognizedText = recognizedText,
+                            accuracy = result.accuracy,
+                            timestamp = System.currentTimeMillis(),
+                        ),
+                    )
+                }
             }
             .onFailure { error ->
                 updateData { it.copy(micErrorMessage = error.message ?: "Failed to evaluate pronunciation") }

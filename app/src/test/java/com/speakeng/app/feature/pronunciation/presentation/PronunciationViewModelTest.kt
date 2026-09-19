@@ -3,10 +3,13 @@ package com.speakeng.app.feature.pronunciation.presentation
 import android.net.Uri
 import app.cash.turbine.test
 import com.speakeng.app.core.common.UiState
+import com.speakeng.app.feature.pronunciation.domain.model.PronunciationHistoryRecord
 import com.speakeng.app.feature.pronunciation.domain.model.SpeechEvent
 import com.speakeng.app.feature.pronunciation.domain.model.SpeechRecognitionState
+import com.speakeng.app.feature.pronunciation.domain.repository.PronunciationHistoryRepository
 import com.speakeng.app.feature.pronunciation.domain.repository.SpeechRepository
 import com.speakeng.app.feature.pronunciation.domain.usecase.EvaluatePronunciationUseCase
+import com.speakeng.app.feature.pronunciation.domain.usecase.SavePronunciationResultUseCase
 import com.speakeng.app.feature.reading.domain.model.Book
 import com.speakeng.app.feature.reading.domain.model.BookSource
 import com.speakeng.app.feature.reading.domain.repository.BookRepository
@@ -71,13 +74,23 @@ class PronunciationViewModelTest {
         override fun ttsEvents(): Flow<SpeechEvent> = emptyFlow()
     }
 
+    private class FakePronunciationHistoryRepository : PronunciationHistoryRepository {
+        val savedRecords = mutableListOf<PronunciationHistoryRecord>()
+        override suspend fun saveResult(record: PronunciationHistoryRecord): Result<Unit> {
+            savedRecords.add(record)
+            return Result.success(Unit)
+        }
+    }
+
     private fun newViewModel(
         bookRepository: BookRepository = FakeBookRepository(book, "Hello there."),
         speechRepository: FakeSpeechRepository = FakeSpeechRepository(),
+        historyRepository: FakePronunciationHistoryRepository = FakePronunciationHistoryRepository(),
     ) = PronunciationViewModel(
         GetBooksUseCase(bookRepository),
         LoadReadingSentencesUseCase(bookRepository),
         EvaluatePronunciationUseCase(),
+        SavePronunciationResultUseCase(historyRepository),
         speechRepository,
     ) to speechRepository
 
@@ -126,6 +139,26 @@ class PronunciationViewModelTest {
         assertFalse(data.isListening)
         assertEquals(100, data.result?.accuracy)
         assertEquals(listOf(100), data.sessionScores)
+    }
+
+    @Test
+    fun `a successful result is saved to pronunciation history`() = runTest(testDispatcher) {
+        val historyRepository = FakePronunciationHistoryRepository()
+        val (viewModel, speechRepository) = newViewModel(historyRepository = historyRepository)
+        advanceUntilIdle()
+        viewModel.selectBook(book.id)
+        advanceUntilIdle()
+        viewModel.onMicPermissionResult(true)
+        speechRepository.recognitionFlow = flowOf(SpeechRecognitionState.Result("Hello there"))
+
+        viewModel.startListening()
+        advanceUntilIdle()
+
+        assertEquals(1, historyRepository.savedRecords.size)
+        val record = historyRepository.savedRecords.first()
+        assertEquals(book.id, record.bookId)
+        assertEquals(0, record.sentenceIndex)
+        assertEquals(100, record.accuracy)
     }
 
     @Test
