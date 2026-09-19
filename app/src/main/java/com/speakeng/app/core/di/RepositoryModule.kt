@@ -3,14 +3,18 @@ package com.speakeng.app.core.di
 import com.speakeng.app.feature.conversation.data.remote.GeminiChatClient
 import com.speakeng.app.feature.conversation.data.remote.GeminiChatClientImpl
 import com.speakeng.app.feature.conversation.data.repository.ConversationAiRepositoryImpl
+import com.speakeng.app.feature.conversation.data.repository.ConversationHistoryRepositoryImpl
 import com.speakeng.app.feature.conversation.domain.repository.ConversationAiRepository
+import com.speakeng.app.feature.conversation.domain.repository.ConversationHistoryRepository
 import com.speakeng.app.feature.curriculum.data.repository.CurriculumRepositoryImpl
 import com.speakeng.app.feature.curriculum.domain.repository.CurriculumRepository
 import com.speakeng.app.feature.home.data.repository.HomeRepositoryImpl
 import com.speakeng.app.feature.home.domain.repository.HomeRepository
 import com.speakeng.app.feature.profile.data.repository.ProfileRepositoryImpl
 import com.speakeng.app.feature.profile.domain.repository.ProfileRepository
+import com.speakeng.app.feature.pronunciation.data.repository.PronunciationHistoryRepositoryImpl
 import com.speakeng.app.feature.pronunciation.data.repository.SpeechRepositoryImpl
+import com.speakeng.app.feature.pronunciation.domain.repository.PronunciationHistoryRepository
 import com.speakeng.app.feature.pronunciation.domain.repository.SpeechRepository
 import com.speakeng.app.feature.reading.data.datasource.AssetBundledBookSource
 import com.speakeng.app.feature.reading.data.datasource.BundledBookSource
@@ -38,11 +42,19 @@ abstract class RepositoryModule {
 
     @Binds
     @Singleton
+    abstract fun bindConversationHistoryRepository(impl: ConversationHistoryRepositoryImpl): ConversationHistoryRepository
+
+    @Binds
+    @Singleton
     abstract fun bindGeminiChatClient(impl: GeminiChatClientImpl): GeminiChatClient
 
     @Binds
     @Singleton
     abstract fun bindSpeechRepository(impl: SpeechRepositoryImpl): SpeechRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindPronunciationHistoryRepository(impl: PronunciationHistoryRepositoryImpl): PronunciationHistoryRepository
 
     @Binds
     @Singleton

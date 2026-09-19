@@ -6,7 +6,6 @@ import androidx.room.Query
 import com.speakeng.app.core.database.entity.ConversationEntity
 import kotlinx.coroutines.flow.Flow
 
-/** TODO(Phase 4): wire this DAO into ConversationAiRepositoryImpl for local history persistence. */
 @Dao
 interface ConversationDao {
     @Query("SELECT * FROM conversations ORDER BY timestamp ASC")
@@ -14,4 +13,7 @@ interface ConversationDao {
 
     @Insert
     suspend fun insert(entity: ConversationEntity)
+
+    @Query("SELECT COUNT(*) FROM conversations WHERE isFromUser = 0")
+    suspend fun countAiReplies(): Int
 }

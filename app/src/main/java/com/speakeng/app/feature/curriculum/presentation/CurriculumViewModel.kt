@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.speakeng.app.core.common.UiState
 import com.speakeng.app.feature.curriculum.domain.usecase.GetCurriculumUseCase
+import com.speakeng.app.feature.curriculum.domain.usecase.SetCurriculumItemCompletedUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -14,6 +15,7 @@ import javax.inject.Inject
 @HiltViewModel
 class CurriculumViewModel @Inject constructor(
     private val getCurriculumUseCase: GetCurriculumUseCase,
+    private val setCurriculumItemCompletedUseCase: SetCurriculumItemCompletedUseCase,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<CurriculumUiState>(UiState.Loading)
@@ -31,6 +33,17 @@ class CurriculumViewModel @Inject constructor(
                 onSuccess = { UiState.Success(it) },
                 onFailure = { UiState.Error(it.message ?: "Failed to load curriculum") },
             )
+        }
+    }
+
+    fun toggleCompleted(itemId: Long) {
+        val items = (_uiState.value as? UiState.Success)?.data ?: return
+        val item = items.firstOrNull { it.id == itemId } ?: return
+        val newCompleted = !item.isCompleted
+
+        _uiState.value = UiState.Success(items.map { if (it.id == itemId) it.copy(isCompleted = newCompleted) else it })
+        viewModelScope.launch {
+            setCurriculumItemCompletedUseCase(itemId, newCompleted)
         }
     }
 }

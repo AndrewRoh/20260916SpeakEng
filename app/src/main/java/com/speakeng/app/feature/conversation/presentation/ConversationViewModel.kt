@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.speakeng.app.core.common.UiState
 import com.speakeng.app.feature.conversation.domain.model.ChatMessage
 import com.speakeng.app.feature.conversation.domain.model.MessageSender
+import com.speakeng.app.feature.conversation.domain.usecase.LoadConversationHistoryUseCase
+import com.speakeng.app.feature.conversation.domain.usecase.SaveConversationMessageUseCase
 import com.speakeng.app.feature.conversation.domain.usecase.SendMessageUseCase
 import com.speakeng.app.feature.pronunciation.domain.model.SpeechEvent
 import com.speakeng.app.feature.pronunciation.domain.repository.SpeechRepository
@@ -19,6 +21,8 @@ import kotlinx.coroutines.launch
 @HiltViewModel
 class ConversationViewModel @Inject constructor(
     private val sendMessageUseCase: SendMessageUseCase,
+    private val loadConversationHistoryUseCase: LoadConversationHistoryUseCase,
+    private val saveConversationMessageUseCase: SaveConversationMessageUseCase,
     private val speechRepository: SpeechRepository,
 ) : ViewModel() {
 
@@ -26,18 +30,24 @@ class ConversationViewModel @Inject constructor(
     val uiState: StateFlow<ConversationUiState> = _uiState.asStateFlow()
 
     init {
-        // Phase 1: no persisted history yet, start from an empty conversation.
-        _uiState.value = UiState.Success(
-            ConversationData(
-                messages = emptyList(),
-                playingMessageId = null,
-                rate = 1f,
-                isRepeatEnabled = false,
-                isAutoPlayEnabled = false,
-                errorMessage = null,
-            ),
-        )
+        loadHistory()
         observeSpeechEvents()
+    }
+
+    private fun loadHistory() {
+        viewModelScope.launch {
+            val history = loadConversationHistoryUseCase().getOrDefault(emptyList())
+            _uiState.value = UiState.Success(
+                ConversationData(
+                    messages = history,
+                    playingMessageId = null,
+                    rate = 1f,
+                    isRepeatEnabled = false,
+                    isAutoPlayEnabled = false,
+                    errorMessage = null,
+                ),
+            )
+        }
     }
 
     fun sendMessage(text: String) {
@@ -51,9 +61,11 @@ class ConversationViewModel @Inject constructor(
         updateData { it.copy(messages = it.messages + userMessage, errorMessage = null) }
 
         viewModelScope.launch {
+            saveConversationMessageUseCase(userMessage)
             val result = sendMessageUseCase(text)
             result.onSuccess { aiMessage ->
                 updateData { it.copy(messages = it.messages + aiMessage) }
+                saveConversationMessageUseCase(aiMessage)
                 if (currentData()?.isAutoPlayEnabled == true) {
                     listenToMessage(aiMessage.id)
                 }
