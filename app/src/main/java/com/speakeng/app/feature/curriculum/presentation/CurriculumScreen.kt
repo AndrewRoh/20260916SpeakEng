@@ -1,6 +1,5 @@
 package com.speakeng.app.feature.curriculum.presentation
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -42,10 +41,10 @@ private fun CurriculumContent(
     LazyColumn(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         item {
             Card(
+                onClick = onOpenBooks,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 6.dp)
-                    .clickable(onClick = onOpenBooks),
+                    .padding(vertical = 6.dp),
             ) {
                 Text(text = "영어 책읽기 (TTS)", modifier = Modifier.padding(16.dp, 12.dp, 16.dp, 4.dp))
                 Text(text = "문장 단위로 읽어주는 책 목록 보기", modifier = Modifier.padding(16.dp, 0.dp, 16.dp, 12.dp))
