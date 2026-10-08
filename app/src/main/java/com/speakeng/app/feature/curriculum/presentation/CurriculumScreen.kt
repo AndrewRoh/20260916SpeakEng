@@ -25,10 +25,14 @@ import com.speakeng.app.core.ui.theme.SpeakEngTheme
 import com.speakeng.app.feature.curriculum.domain.model.CurriculumItem
 
 @Composable
-fun CurriculumScreen(onOpenBooks: () -> Unit, viewModel: CurriculumViewModel = hiltViewModel()) {
+fun CurriculumScreen(
+    onOpenBooks: () -> Unit,
+    onOpenGrammar: () -> Unit,
+    viewModel: CurriculumViewModel = hiltViewModel(),
+) {
     val uiState by viewModel.uiState.collectAsState()
     UiStateContent(uiState = uiState) { items ->
-        CurriculumContent(items, onOpenBooks, onToggleCompleted = viewModel::toggleCompleted)
+        CurriculumContent(items, onOpenBooks, onOpenGrammar, onToggleCompleted = viewModel::toggleCompleted)
     }
 }
 
@@ -36,6 +40,7 @@ fun CurriculumScreen(onOpenBooks: () -> Unit, viewModel: CurriculumViewModel = h
 private fun CurriculumContent(
     items: List<CurriculumItem>,
     onOpenBooks: () -> Unit,
+    onOpenGrammar: () -> Unit,
     onToggleCompleted: (Long) -> Unit,
 ) {
     LazyColumn(modifier = Modifier.fillMaxSize().padding(16.dp)) {
@@ -48,6 +53,17 @@ private fun CurriculumContent(
             ) {
                 Text(text = "영어 책읽기 (TTS)", modifier = Modifier.padding(16.dp, 12.dp, 16.dp, 4.dp))
                 Text(text = "문장 단위로 읽어주는 책 목록 보기", modifier = Modifier.padding(16.dp, 0.dp, 16.dp, 12.dp))
+            }
+        }
+        item {
+            Card(
+                onClick = onOpenGrammar,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 6.dp),
+            ) {
+                Text(text = "말하기 영문법 (25강)", modifier = Modifier.padding(16.dp, 12.dp, 16.dp, 4.dp))
+                Text(text = "하루 2강씩, 배운 내용은 계속 복습 가능", modifier = Modifier.padding(16.dp, 0.dp, 16.dp, 12.dp))
             }
         }
         items(items, key = { it.id }) { item ->
@@ -76,6 +92,6 @@ private fun CurriculumScreenPreview() {
             uiState = UiState.Success(
                 listOf(CurriculumItem(1, "Everyday Greetings", "Beginner", false)),
             ),
-        ) { CurriculumContent(it, onOpenBooks = {}, onToggleCompleted = {}) }
+        ) { CurriculumContent(it, onOpenBooks = {}, onOpenGrammar = {}, onToggleCompleted = {}) }
     }
 }

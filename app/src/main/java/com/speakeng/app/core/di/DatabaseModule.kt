@@ -5,6 +5,8 @@ import androidx.room.Room
 import com.speakeng.app.core.database.SpeakEngDatabase
 import com.speakeng.app.core.database.dao.ConversationDao
 import com.speakeng.app.core.database.dao.CurriculumProgressDao
+import com.speakeng.app.core.database.dao.GrammarLessonProgressDao
+import com.speakeng.app.core.database.dao.GrammarTrackStateDao
 import com.speakeng.app.core.database.dao.PronunciationHistoryDao
 import dagger.Module
 import dagger.Provides
@@ -39,4 +41,12 @@ object DatabaseModule {
     @Provides
     fun providePronunciationHistoryDao(database: SpeakEngDatabase): PronunciationHistoryDao =
         database.pronunciationHistoryDao()
+
+    @Provides
+    fun provideGrammarLessonProgressDao(database: SpeakEngDatabase): GrammarLessonProgressDao =
+        database.grammarLessonProgressDao()
+
+    @Provides
+    fun provideGrammarTrackStateDao(database: SpeakEngDatabase): GrammarTrackStateDao =
+        database.grammarTrackStateDao()
 }

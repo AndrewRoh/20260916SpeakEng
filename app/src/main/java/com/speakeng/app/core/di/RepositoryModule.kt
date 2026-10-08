@@ -8,6 +8,8 @@ import com.speakeng.app.feature.conversation.domain.repository.ConversationAiRep
 import com.speakeng.app.feature.conversation.domain.repository.ConversationHistoryRepository
 import com.speakeng.app.feature.curriculum.data.repository.CurriculumRepositoryImpl
 import com.speakeng.app.feature.curriculum.domain.repository.CurriculumRepository
+import com.speakeng.app.feature.grammar.data.repository.GrammarLessonRepositoryImpl
+import com.speakeng.app.feature.grammar.domain.repository.GrammarLessonRepository
 import com.speakeng.app.feature.home.data.repository.HomeRepositoryImpl
 import com.speakeng.app.feature.home.domain.repository.HomeRepository
 import com.speakeng.app.feature.profile.data.repository.ProfileRepositoryImpl
@@ -59,6 +61,10 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindCurriculumRepository(impl: CurriculumRepositoryImpl): CurriculumRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindGrammarLessonRepository(impl: GrammarLessonRepositoryImpl): GrammarLessonRepository
 
     @Binds
     @Singleton

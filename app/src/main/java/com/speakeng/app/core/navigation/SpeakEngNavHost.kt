@@ -8,6 +8,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.speakeng.app.feature.conversation.presentation.ConversationScreen
 import com.speakeng.app.feature.curriculum.presentation.CurriculumScreen
+import com.speakeng.app.feature.grammar.presentation.detail.GrammarLessonDetailScreen
+import com.speakeng.app.feature.grammar.presentation.track.GrammarTrackScreen
 import com.speakeng.app.feature.home.presentation.HomeScreen
 import com.speakeng.app.feature.profile.presentation.ProfileScreen
 import com.speakeng.app.feature.pronunciation.presentation.PronunciationScreen
@@ -17,8 +19,10 @@ import java.net.URLEncoder
 
 private const val BOOK_LIST_ROUTE = "bookList"
 private const val READING_ROUTE = "reading/{bookId}"
+private const val GRAMMAR_TRACK_ROUTE = "grammarTrack"
+private const val GRAMMAR_LESSON_ROUTE = "grammarLesson/{lessonId}"
 
-/** Hosts the 5 top-level screens reachable from the bottom navigation bar, plus the reading flow pushed from Curriculum. */
+/** Hosts the 5 top-level screens reachable from the bottom navigation bar, plus the reading and grammar flows pushed from Curriculum. */
 @Composable
 fun SpeakEngNavHost(
     navController: NavHostController,
@@ -33,7 +37,10 @@ fun SpeakEngNavHost(
         composable(Destination.Conversation.route) { ConversationScreen() }
         composable(Destination.Pronunciation.route) { PronunciationScreen() }
         composable(Destination.Curriculum.route) {
-            CurriculumScreen(onOpenBooks = { navController.navigate(BOOK_LIST_ROUTE) })
+            CurriculumScreen(
+                onOpenBooks = { navController.navigate(BOOK_LIST_ROUTE) },
+                onOpenGrammar = { navController.navigate(GRAMMAR_TRACK_ROUTE) },
+            )
         }
         composable(Destination.Profile.route) { ProfileScreen() }
 
@@ -47,6 +54,16 @@ fun SpeakEngNavHost(
             arguments = listOf(navArgument("bookId") { type = NavType.StringType }),
         ) {
             ReadingScreen()
+        }
+
+        composable(GRAMMAR_TRACK_ROUTE) {
+            GrammarTrackScreen(onLessonClick = { lessonId -> navController.navigate("grammarLesson/$lessonId") })
+        }
+        composable(
+            route = GRAMMAR_LESSON_ROUTE,
+            arguments = listOf(navArgument("lessonId") { type = NavType.IntType }),
+        ) {
+            GrammarLessonDetailScreen()
         }
     }
 }
