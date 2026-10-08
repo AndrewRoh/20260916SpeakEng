@@ -3,10 +3,12 @@ package com.speakeng.app.feature.grammar.presentation.track
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.speakeng.app.core.common.UiState
+import com.speakeng.app.core.di.ApplicationScope
 import com.speakeng.app.feature.grammar.domain.usecase.GetGrammarLessonsUseCase
 import com.speakeng.app.feature.grammar.domain.usecase.SetGrammarLessonCompletedUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -16,6 +18,7 @@ import kotlinx.coroutines.launch
 class GrammarTrackViewModel @Inject constructor(
     private val getGrammarLessonsUseCase: GetGrammarLessonsUseCase,
     private val setGrammarLessonCompletedUseCase: SetGrammarLessonCompletedUseCase,
+    @ApplicationScope private val applicationScope: CoroutineScope,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<GrammarTrackUiState>(UiState.Loading)
@@ -45,7 +48,9 @@ class GrammarTrackViewModel @Inject constructor(
         _uiState.value = UiState.Success(
             lessons.map { if (it.lesson.id == lessonId) it.copy(isCompleted = newCompleted) else it },
         )
-        viewModelScope.launch {
+        // Persisted on applicationScope, not viewModelScope: this must survive navigating away
+        // from the screen right after tapping, which cancels viewModelScope before the write lands.
+        applicationScope.launch {
             setGrammarLessonCompletedUseCase(lessonId, newCompleted)
         }
     }

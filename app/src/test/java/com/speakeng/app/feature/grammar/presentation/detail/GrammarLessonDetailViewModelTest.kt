@@ -10,6 +10,7 @@ import com.speakeng.app.feature.grammar.domain.usecase.SetGrammarLessonCompleted
 import com.speakeng.app.feature.pronunciation.domain.model.SpeechEvent
 import com.speakeng.app.feature.pronunciation.domain.model.SpeechRecognitionState
 import com.speakeng.app.feature.pronunciation.domain.repository.SpeechRepository
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
@@ -73,6 +74,7 @@ class GrammarLessonDetailViewModelTest {
         GetGrammarLessonsUseCase(repository),
         SetGrammarLessonCompletedUseCase(repository),
         speechRepository,
+        CoroutineScope(testDispatcher),
     ) to Pair(repository, speechRepository)
 
     private fun GrammarLessonDetailViewModel.data() = (uiState.value as UiState.Success).data

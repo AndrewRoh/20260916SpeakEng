@@ -4,12 +4,14 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.speakeng.app.core.common.UiState
+import com.speakeng.app.core.di.ApplicationScope
 import com.speakeng.app.feature.grammar.domain.usecase.GetGrammarLessonsUseCase
 import com.speakeng.app.feature.grammar.domain.usecase.SetGrammarLessonCompletedUseCase
 import com.speakeng.app.feature.pronunciation.domain.model.SpeechEvent
 import com.speakeng.app.feature.pronunciation.domain.repository.SpeechRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -22,6 +24,7 @@ class GrammarLessonDetailViewModel @Inject constructor(
     private val getGrammarLessonsUseCase: GetGrammarLessonsUseCase,
     private val setGrammarLessonCompletedUseCase: SetGrammarLessonCompletedUseCase,
     private val speechRepository: SpeechRepository,
+    @ApplicationScope private val applicationScope: CoroutineScope,
 ) : ViewModel() {
 
     private val lessonId: Int = checkNotNull(savedStateHandle.get<Int>(LESSON_ID_ARG)) { "Missing lessonId argument" }
@@ -50,7 +53,9 @@ class GrammarLessonDetailViewModel @Inject constructor(
         val data = currentData() ?: return
         val newCompleted = !data.isCompleted
         updateData { it.copy(isCompleted = newCompleted) }
-        viewModelScope.launch {
+        // Persisted on applicationScope, not viewModelScope: this must survive navigating away
+        // from the screen right after tapping, which cancels viewModelScope before the write lands.
+        applicationScope.launch {
             setGrammarLessonCompletedUseCase(lessonId, newCompleted)
         }
     }
