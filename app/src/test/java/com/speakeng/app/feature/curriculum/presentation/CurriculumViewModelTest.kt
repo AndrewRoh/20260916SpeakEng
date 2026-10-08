@@ -6,6 +6,7 @@ import com.speakeng.app.feature.curriculum.domain.model.CurriculumItem
 import com.speakeng.app.feature.curriculum.domain.repository.CurriculumRepository
 import com.speakeng.app.feature.curriculum.domain.usecase.GetCurriculumUseCase
 import com.speakeng.app.feature.curriculum.domain.usecase.SetCurriculumItemCompletedUseCase
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -47,7 +48,11 @@ class CurriculumViewModelTest {
     }
 
     private fun newViewModel(repository: FakeCurriculumRepository = FakeCurriculumRepository()) =
-        CurriculumViewModel(GetCurriculumUseCase(repository), SetCurriculumItemCompletedUseCase(repository)) to repository
+        CurriculumViewModel(
+            GetCurriculumUseCase(repository),
+            SetCurriculumItemCompletedUseCase(repository),
+            CoroutineScope(testDispatcher),
+        ) to repository
 
     @Test
     fun `initial state is Loading`() = runTest(testDispatcher) {

@@ -3,9 +3,11 @@ package com.speakeng.app.feature.curriculum.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.speakeng.app.core.common.UiState
+import com.speakeng.app.core.di.ApplicationScope
 import com.speakeng.app.feature.curriculum.domain.usecase.GetCurriculumUseCase
 import com.speakeng.app.feature.curriculum.domain.usecase.SetCurriculumItemCompletedUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -16,6 +18,7 @@ import javax.inject.Inject
 class CurriculumViewModel @Inject constructor(
     private val getCurriculumUseCase: GetCurriculumUseCase,
     private val setCurriculumItemCompletedUseCase: SetCurriculumItemCompletedUseCase,
+    @ApplicationScope private val applicationScope: CoroutineScope,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<CurriculumUiState>(UiState.Loading)
@@ -42,7 +45,9 @@ class CurriculumViewModel @Inject constructor(
         val newCompleted = !item.isCompleted
 
         _uiState.value = UiState.Success(items.map { if (it.id == itemId) it.copy(isCompleted = newCompleted) else it })
-        viewModelScope.launch {
+        // Persisted on applicationScope, not viewModelScope: this must survive navigating away
+        // from the screen right after tapping, which cancels viewModelScope before the write lands.
+        applicationScope.launch {
             setCurriculumItemCompletedUseCase(itemId, newCompleted)
         }
     }

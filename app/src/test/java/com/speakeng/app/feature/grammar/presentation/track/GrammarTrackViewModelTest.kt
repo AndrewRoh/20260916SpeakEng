@@ -7,6 +7,7 @@ import com.speakeng.app.feature.grammar.domain.model.GrammarLessonState
 import com.speakeng.app.feature.grammar.domain.repository.GrammarLessonRepository
 import com.speakeng.app.feature.grammar.domain.usecase.GetGrammarLessonsUseCase
 import com.speakeng.app.feature.grammar.domain.usecase.SetGrammarLessonCompletedUseCase
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -50,7 +51,11 @@ class GrammarTrackViewModelTest {
     }
 
     private fun newViewModel(repository: FakeGrammarLessonRepository = FakeGrammarLessonRepository()) =
-        GrammarTrackViewModel(GetGrammarLessonsUseCase(repository), SetGrammarLessonCompletedUseCase(repository)) to repository
+        GrammarTrackViewModel(
+            GetGrammarLessonsUseCase(repository),
+            SetGrammarLessonCompletedUseCase(repository),
+            CoroutineScope(testDispatcher),
+        ) to repository
 
     @Test
     fun `initial state is Loading`() = runTest(testDispatcher) {
