@@ -13,6 +13,7 @@ import com.speakeng.app.feature.pronunciation.domain.repository.SpeechRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -22,6 +23,7 @@ import kotlinx.coroutines.test.setMain
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
@@ -56,13 +58,24 @@ class GrammarLessonDetailViewModelTest {
 
     private class FakeSpeechRepository : SpeechRepository {
         var lastSpoken: String? = null
+        var lastUtteranceId: String? = null
+        var lastRate: Float? = null
+        private val events = MutableSharedFlow<SpeechEvent>(extraBufferCapacity = 16)
+
         override fun startListening(): Flow<SpeechRecognitionState> = emptyFlow()
         override fun stopListening() = Unit
         override fun speak(text: String, utteranceId: String, rate: Float) {
             lastSpoken = text
+            lastUtteranceId = utteranceId
+            lastRate = rate
         }
         override fun stop() = Unit
-        override fun ttsEvents(): Flow<SpeechEvent> = emptyFlow()
+        override fun ttsEvents(): Flow<SpeechEvent> = events
+
+        suspend fun completeCurrent() {
+            val id = checkNotNull(lastUtteranceId) { "No utterance was spoken" }
+            events.emit(SpeechEvent.Completed(id))
+        }
     }
 
     private fun newViewModel(
@@ -113,5 +126,115 @@ class GrammarLessonDetailViewModelTest {
 
         assertEquals(true, viewModel.data().isCompleted)
         assertEquals(1 to true, repository.lastSetCompleted)
+    }
+
+    @Test
+    fun `playAll plays through every example in order then stops`() = runTest(testDispatcher) {
+        val (viewModel, repos) = newViewModel(lessonId = 1)
+        val (_, speechRepository) = repos
+        advanceUntilIdle()
+
+        viewModel.playAll(shuffled = false)
+        assertEquals(0, viewModel.data().playingExampleIndex)
+        assertTrue(viewModel.data().isSequencePlaying)
+
+        val exampleCount = GrammarLessonContent.LESSONS[0].examples.size
+        for (expectedIndex in 1 until exampleCount) {
+            speechRepository.completeCurrent()
+            advanceUntilIdle()
+            assertEquals(expectedIndex, viewModel.data().playingExampleIndex)
+        }
+
+        speechRepository.completeCurrent()
+        advanceUntilIdle()
+        assertNull(viewModel.data().playingExampleIndex)
+        assertEquals(false, viewModel.data().isSequencePlaying)
+    }
+
+    @Test
+    fun `playAll with shuffled true plays every example exactly once`() = runTest(testDispatcher) {
+        val (viewModel, repos) = newViewModel(lessonId = 1)
+        val (_, speechRepository) = repos
+        advanceUntilIdle()
+
+        viewModel.playAll(shuffled = true)
+        val exampleCount = GrammarLessonContent.LESSONS[0].examples.size
+        val playedIndices = mutableListOf<Int>()
+        repeat(exampleCount) {
+            playedIndices += checkNotNull(viewModel.data().playingExampleIndex)
+            speechRepository.completeCurrent()
+            advanceUntilIdle()
+        }
+
+        assertEquals((0 until exampleCount).toSet(), playedIndices.toSet())
+        assertNull(viewModel.data().playingExampleIndex)
+    }
+
+    @Test
+    fun `single repeat replays the same sentence when it finishes`() = runTest(testDispatcher) {
+        val (viewModel, repos) = newViewModel(lessonId = 1)
+        val (_, speechRepository) = repos
+        advanceUntilIdle()
+
+        viewModel.toggleSingleRepeat()
+        assertTrue(viewModel.data().isSingleRepeatEnabled)
+        viewModel.play(2)
+        advanceUntilIdle()
+
+        speechRepository.completeCurrent()
+        advanceUntilIdle()
+
+        assertEquals(2, viewModel.data().playingExampleIndex)
+        assertEquals(GrammarLessonContent.LESSONS[0].examples[2].english, speechRepository.lastSpoken)
+    }
+
+    @Test
+    fun `toggleSingleRepeat while a sequence is playing stops it first`() = runTest(testDispatcher) {
+        val (viewModel, _) = newViewModel(lessonId = 1)
+        advanceUntilIdle()
+
+        viewModel.playAll(shuffled = false)
+        assertTrue(viewModel.data().isSequencePlaying)
+
+        viewModel.toggleSingleRepeat()
+
+        assertNull(viewModel.data().playingExampleIndex)
+        assertEquals(false, viewModel.data().isSequencePlaying)
+        assertTrue(viewModel.data().isSingleRepeatEnabled)
+    }
+
+    @Test
+    fun `listen and repeat pauses after a sentence before advancing to the next one`() = runTest(testDispatcher) {
+        val (viewModel, repos) = newViewModel(lessonId = 1)
+        val (_, speechRepository) = repos
+        advanceUntilIdle()
+
+        viewModel.toggleListenAndRepeat()
+        viewModel.playAll(shuffled = false)
+        advanceUntilIdle()
+
+        speechRepository.completeCurrent()
+        testDispatcher.scheduler.runCurrent()
+
+        assertTrue(viewModel.data().isAwaitingRepeat)
+        assertEquals(0, viewModel.data().playingExampleIndex)
+
+        advanceUntilIdle()
+
+        assertEquals(false, viewModel.data().isAwaitingRepeat)
+        assertEquals(1, viewModel.data().playingExampleIndex)
+    }
+
+    @Test
+    fun `setRate updates the data and is used for subsequent playback`() = runTest(testDispatcher) {
+        val (viewModel, repos) = newViewModel(lessonId = 1)
+        val (_, speechRepository) = repos
+        advanceUntilIdle()
+
+        viewModel.setRate(0.5f)
+        assertEquals(0.5f, viewModel.data().rate)
+
+        viewModel.play(0)
+        assertEquals(0.5f, speechRepository.lastRate)
     }
 }
