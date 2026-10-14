@@ -37,6 +37,19 @@ android {
         buildConfigField("String", "GEMINI_API_KEY", "\"$geminiApiKey\"")
     }
 
+    signingConfigs {
+        // Committed (not secret - same convention as Android's own auto-generated debug key)
+        // so every build, local or CI, signs with the same certificate. Without this, each
+        // GitHub Actions run would get a fresh ephemeral debug key, and Google Sign-In's
+        // registered SHA-1 fingerprint would go stale on every build.
+        getByName("debug") {
+            storeFile = file("debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
