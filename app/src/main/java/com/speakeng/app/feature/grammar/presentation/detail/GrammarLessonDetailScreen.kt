@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Shuffle
@@ -25,6 +26,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -96,7 +98,12 @@ private fun GrammarLessonDetailContent(
             onToggleListenAndRepeat = onToggleListenAndRepeat,
             onToggleSingleRepeat = onToggleSingleRepeat,
         )
-        LazyColumn(modifier = Modifier.fillMaxSize()) {
+        val listState = rememberLazyListState()
+        LaunchedEffect(data.playingExampleIndex) {
+            val index = data.playingExampleIndex ?: return@LaunchedEffect
+            listState.animateScrollToItem(index)
+        }
+        LazyColumn(modifier = Modifier.fillMaxSize(), state = listState) {
             items(data.lesson.examples, key = { it.english }) { example ->
                 val index = data.lesson.examples.indexOf(example)
                 ExampleRow(
@@ -173,10 +180,10 @@ private fun ExampleRow(example: GrammarExample, isPlaying: Boolean, isAwaitingRe
             .fillMaxWidth()
             .padding(vertical = 6.dp)
             .let {
-                if (isAwaitingRepeat) {
-                    it.background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(12.dp))
-                } else {
-                    it
+                when {
+                    isAwaitingRepeat -> it.background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(12.dp))
+                    isPlaying -> it.background(MaterialTheme.colorScheme.secondaryContainer, RoundedCornerShape(12.dp))
+                    else -> it
                 }
             },
     ) {
